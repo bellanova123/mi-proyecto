@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generador de QR de Emergencia Familiar</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    :root {
+      --primary: #c62828;
+      --primary-hover: #b71c1c;
+      --bg: #f8f9fa;
+      --card-bg: #ffffff;
+      --text: #212529;
+      --border: #ced4da;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      max-width: 650px;
+      width: 100%;
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      color: var(--primary);
+      text-align: center;
+      margin-bottom: 8px;
+      font-size: 1.8rem;
+    }
+
+    p.subtitle {
+      text-align: center;
+      color: #6c757d;
+      margin-bottom: 25px;
+      font-size: 0.95rem;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 70px;
+    }
+
+    .btn {
+      width: 100%;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .btn:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-download {
+      background-color: #2e7d32;
+      margin-top: 15px;
+      display: none;
+    }
+
+    .btn-download:hover {
+      background-color: #1b5e20;
+    }
+
+    #qr-section {
+      margin-top: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 20px;
+      border-top: 1px dashed var(--border);
+    }
+
+    #qrcode img {
+      padding: 10px;
+      background: white;
+      border: 2px solid var(--primary);
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>SosQR - Ficha de Emergencia</h1>
+  <p class="subtitle">Genera un código QR con los datos vitales de tu familia para situaciones de riesgo.</p>
+
+  <form id="emergencyForm">
+    <div class="form-group">
+      <label for="nombre">Nombre Completo</label>
+      <input type="text" id="nombre" placeholder="Ej: Kevelin Ortiz" required>
+    </div>
+
+    <div class="form-group">
+      <label for="rh">Edad y Tipo de Sangre (RH)</label>
+      <input type="text" id="rh" placeholder="Ej: 17 años | O+" required>
+    </div>
+
+    <div class="form-group">
+      <label for="medico">Condiciones Médicas y Alergias</label>
+      <textarea id="medico" placeholder="Ej: Taquicardia / Sin alergias a medicamentos"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="contactos">Contactos de Emergencia (Nombre y Celular)</label>
+      <textarea id="contactos" placeholder="Ej: Mamá: 3175363369 / Papá: 3114456781" required></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="punto">Punto de Encuentro / Evacuación</label>
+      <input type="text" id="punto" placeholder="Ej: Barrio Uribe Uribe (Casa Tía Neida)">
+    </div>
+
+    <button type="button" class="btn" onclick="generarQR()">Generar Código QR</button>
+  </form>
+
+  <div id="qr-section">
+    <div id="qrcode"></div>
+    <button id="downloadBtn" class="btn btn-download" onclick="descargarQR()">Descargar QR (PNG)</button>
+  </div>
+</div>
+
+<script>
+  function generarQR() {
+    const container = document.getElementById("qrcode");
+    const downloadBtn = document.getElementById("downloadBtn");
+    
+    // Limpiar QR previo
+    container.innerHTML = "";
+
+    const nombre = document.getElementById("nombre").value;
+    const rh = document.getElementById("rh").value;
+    const medico = document.getElementById("medico").value || 'Ninguna registrada';
+    const contactos = document.getElementById("contactos").value;
+    const punto = document.getElementById("punto").value || 'No especificado';
+
+    if (!nombre || !rh || !contactos) {
+      alert("Por favor completa los campos obligatorios.");
+      return;
+    }
+
+    const textoQR = 
+`===================================
+   FICHA DE EMERGENCIA FAMILIAR
+===================================
+• Nombre: ${nombre}
+• Edad / RH: ${rh}
+• Condición / Alergias: ${medico}
+-----------------------------------
+[ CONTACTOS DIRECTOS ]
+${contactos}
+-----------------------------------
+[ PUNTO DE ENCUENTRO ]
+• ${punto}
+===================================`;
+
+    new QRCode(container, {
+      text: textoQR,
+      width: 220,
+      height: 220,
+      colorDark: "#b71c1c",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H
+    });
+
+    // Mostrar el botón de descarga
+    setTimeout(() => {
+      downloadBtn.style.display = "block";
+    }, 300);
+  }
+
+  function descargarQR() {
+    const img = document.querySelector("#qrcode img");
+    if (img) {
+      const link = document.createElement("a");
+      link.href = img.src;
+      link.download = "QR_Emergencia_Familiar.png";
+      link.click();
+    }
+  }
+</script>
+
+</body>
+</html>
